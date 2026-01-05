@@ -1,3 +1,12 @@
+{% macro _get_ml_config() %}
+    {# Support both direct ml_config (legacy) and meta.ml_config (dbt 1.9+) #}
+    {% set ml_config = config.get('ml_config') %}
+    {% if ml_config is none or ml_config == {} %}
+        {% set ml_config = config.meta_get('ml_config', {}) %}
+    {% endif %}
+    {% do return(ml_config) %}
+{% endmacro %}
+
 {% macro drop_model(relation) %}
     {{
         adapter.dispatch(
@@ -51,7 +60,7 @@
 {% endmacro %}
 
 {% macro bigquery__create_model_as(relation, sql) %}
-    {%- set ml_config = config.get('ml_config', {}) -%}
+    {%- set ml_config = dbt_ml._get_ml_config() -%}
     {%- set raw_labels = config.get('labels', {}) -%}
     {%- set sql_header = config.get('sql_header', none) -%}
     {%- set prevent_overwrite = config.get('prevent_overwrite', False) -%}
